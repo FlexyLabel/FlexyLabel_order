@@ -23,6 +23,228 @@ def inject_full_css():
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
+            .stApp {
+                background: radial-gradient(circle at top right, #1e293b, #0f172a);
+                color: #ffffff !important;
+                font-family: 'Inter', sans-serif;
+            }
+
+            /* INPUTS: Fondo Blanco, Letras Negras - Estilo Iván */
+            input, select, textarea, div[data-baseweb="input"] input {
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                border-radius: 8px !important;
+                font-weight: 700 !important;
+                border: 2px solid #3b82f6 !important;
+            }
+            
+            label {
+                color: #94a3b8 !important;
+                font-weight: 700 !important;
+                text-transform: uppercase;
+            }
+
+            div[data-testid="stForm"] {
+                background: rgba(30, 41, 59, 0.7) !important;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.1) !important;
+                border-radius: 20px !important;
+                padding: 3rem !important;
+            }
+
+            /* Estilo para los botones de selección de imagen */
+            .stButton button {
+                font-weight: 700 !important;
+                text-transform: uppercase;
+            }
+
+            .metric-box {
+                background: rgba(255,255,255,0.05);
+                padding: 1.5rem;
+                border-radius: 12px;
+                border-left: 5px solid #3b82f6;
+                margin-top: 1rem;
+            }
+            
+            /* Resaltado de selección */
+            .selected-box {
+                border: 3px solid #3b82f6;
+                border-radius: 10px;
+                padding: 5px;
+                background: rgba(59, 130, 246, 0.2);
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+# =============================================================================
+# 2. MOTOR DE PDF
+# =============================================================================
+class PDF_Industrial(FPDF):
+    def header(self):
+        self.set_fill_color(15, 23, 42)
+        self.rect(0, 0, 210, 40, 'F')
+        self.set_xy(10, 15)
+        self.set_font('Helvetica', 'B', 22)
+        self.set_text_color(255, 255, 255)
+        self.cell(0, 10, 'FLEXYLABEL // ORDEN DE PRODUCCION', ln=True)
+        self.ln(15)
+
+    def seccion(self, titulo):
+        self.ln(5)
+        self.set_fill_color(241, 245, 249)
+        self.set_text_color(30, 41, 59)
+        self.set_font('Helvetica', 'B', 12)
+        self.cell(0, 10, f"  {titulo}", ln=True, fill=True)
+        self.ln(4)
+
+    def fila(self, l1, v1, l2="", v2=""):
+        self.set_font('Helvetica', 'B', 10)
+        self.set_text_color(50, 50, 50)
+        self.cell(40, 8, f"{l1}:", 0)
+        self.set_font('Helvetica', '', 10)
+        self.cell(60, 8, f"{v1}", 0)
+        if l2:
+            self.set_font('Helvetica', 'B', 10)
+            self.cell(40, 8, f"{l2}:", 0)
+            self.set_font('Helvetica', '', 10)
+            self.cell(0, 8, f"{v2}", 0)
+        self.ln(8)
+
+def enviar_orden(pdf_path, af_file, datos):
+    try:
+        user = st.secrets["email_usuario"]
+        pwd = st.secrets["email_password"]
+        msg_t = MIMEMultipart()
+        msg_t['From'] = user
+        msg_t['To'] = "covet@etiquetes.com"
+        msg_t['Subject'] = f"🚀 PRODUCCION: {datos['cliente']} | REF: {datos['ref']}"
+        msg_t.attach(MIMEText(f"Nueva orden recibida.", 'plain'))
+        
+        with open(pdf_path, "rb") as f:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(f.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f'attachment; filename="Ficha_{datos["ref"]}.pdf"')
+            msg_t.attach(part)
+
+        af_part = MIMEBase('application', 'octet-stream')
+        af_part.set_payload(af_file.getvalue())
+        encoders.encode_base64(af_part)
+        af_part.add_header('Content-Disposition', f'attachment; filename="ARTE_FINAL.pdf"')
+        msg_t.attach(af_part)
+
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(user, pwd)
+        server.send_message(msg_t)
+        server.quit()
+        return True
+    except Exception as e:
+        st.error(f"Error: {e}")
+        return False
+
+# =============================================================================
+# 4. APLICACIÓN PRINCIPAL
+# =============================================================================
+inject_full_css()
+st.markdown("<h1 style='text-align:center;'>FLEXYLABEL <span style='font-weight:300;'>ORDER SYSTEM</span></h1>", unsafe_allow_html=True)
+
+# Inicializar estado de selección si no existe
+if 'sentido_seleccionado' not in st.session_state:
+    st.session_state.sentido_seleccionado = "1"
+
+L, M, R = st.columns([1, 4, 1])
+
+with M:
+    with st.form("industrial_form_v5"):
+        st.write("### 🏢 DATOS DEL PROYECTO")
+        c1, c2, c3 = st.columns([2, 2, 1])
+        cliente = c1.text_input("RAZÓN SOCIAL / CLIENTE")
+        email_c = c2.text_input("EMAIL DE CONFIRMACIÓN")
+        ref_p = c3.text_input("REF. INTERNA", value="ORD-2026")
+
+        st.write("### 📐 ESPECIFICACIONES TÉCNICAS")
+        c4, c5, c6 = st.columns(3)
+        ancho = c4.number_input("ANCHO (mm)", value=100)
+        largo = c5.number_input("LARGO (mm)", value=100)
+        cantidad = c6.number_input("CANTIDAD TOTAL (uds)", value=5000)
+
+        st.write("---")
+        st.write("### ⚙️ SELECCIÓN VISUAL DE BOBINADO")
+        
+        # Grid de Imágenes para selección
+        # Nota: En un entorno real, estas URLs serían las imágenes individuales de cada sentido (1 al 8)
+        col_img1, col_img2, col_img3, col_img4 = st.columns(4)
+        col_img5, col_img6, col_img7, col_img8 = st.columns(4)
+        
+        canales = [col_img1, col_img2, col_img3, col_img4, col_img5, col_img6, col_img7, col_img8]
+        
+        # Simulación de imágenes individuales (aquí pondrías los links a cada icono de bobinado)
+        #  ... 
+        for i, col in enumerate(canales, 1):
+            with col:
+                st.image(f"https://raw.githubusercontent.com/Anfega/sentidos/main/{i}.png", use_container_width=True)
+                if st.form_submit_button(f"POSICIÓN {i}"):
+                    st.session_state.sentido_seleccionado = str(i)
+
+        st.markdown(f"""
+            <div style="background:#1e3a8a; padding:15px; border-radius:10px; text-align:center; border:2px solid #3b82f6; margin-bottom:20px;">
+                <h2 style="margin:0; color:white;">SELECCIÓN ACTUAL: POSICIÓN {st.session_state.sentido_seleccionado}</h2>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.write("### 📦 SOPORTE Y ACABADOS")
+        c7, c8, c9 = st.columns(3)
+        material = c7.selectbox("SOPORTE", ["PP Blanco", "PP Transparente", "Couché", "Térmico", "Verjurado"])
+        mandril = c8.selectbox("MANDRIL", ["76mm", "40mm", "25mm"])
+        etq_r = c9.number_input("ETIQUETAS / ROLLO", value=1000)
+
+        st.write("### 📂 ARCHIVOS")
+        archivo_af = st.file_uploader("SUBIR DISEÑO (PDF)", type=["pdf"])
+        obs = st.text_area("NOTAS DE PRODUCCIÓN")
+
+        # Cálculos
+        ml = (cantidad * (largo + 3)) / 1000
+        st.markdown(f'<div class="metric-box"><h3 style="margin:0; color:#60a5fa;">{round(ml, 2)} Metros Lineales Estimados</h3></div>', unsafe_allow_html=True)
+
+        if st.form_submit_button("🚀 ENVIAR ORDEN COMPLETA"):
+            if not cliente or not archivo_af:
+                st.error("Faltan datos obligatorios.")
+            else:
+                pdf = PDF_Industrial()
+                pdf.add_page()
+                pdf.seccion("ORDEN DE TRABAJO")
+                pdf.fila("Cliente", cliente, "Referencia", ref_p)
+                pdf.fila("Sentido Bobinado", st.session_state.sentido_seleccionado, "Material", material)
+                pdf.fila("Medidas", f"{ancho}x{largo}mm", "Cantidad", f"{cantidad} uds")
+                pdf.output(f"Ficha_{ref_p}.pdf")
+                
+                if enviar_orden(f"Ficha_{ref_p}.pdf", archivo_af, {"cliente": cliente, "ref": ref_p}):
+                    st.success("Orden enviada con éxito.")
+                    st.balloons()import streamlit as st
+from fpdf import FPDF
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import datetime
+import os
+import math
+
+# =============================================================================
+# 1. CONFIGURACIÓN DE INTERFAZ PREMIUM (DARK INDUSTRIAL)
+# =============================================================================
+st.set_page_config(
+    page_title="FlexyLabel Order Management | Enterprise v4.5",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+def inject_full_css():
+    st.markdown("""
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
             /* Fondo y Textos Generales */
             .stApp {
                 background: radial-gradient(circle at top right, #1e293b, #0f172a);
