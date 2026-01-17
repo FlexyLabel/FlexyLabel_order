@@ -10,117 +10,115 @@ import os
 import time
 
 # =============================================================================
-# 1. CONFIGURACIÓN E INTERFAZ DARK PROFESIONAL
+# 1. CONFIGURACIÓN E INTERFAZ DARK PROFESIONAL (INTER / LETRAS NEGRAS EN INPUTS)
 # =============================================================================
 st.set_page_config(
-    page_title="FlexyLabel Order | Gestión Industrial",
+    page_title="FLEXYLABEL ORDER | Production System",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-def inject_dark_industrial_ui():
+def inject_industrial_dark_ui():
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-            /* Fondo Oscuro Principal */
+            /* Fondo Oscuro */
             .stApp {
                 background-color: #0d1117;
                 color: #ffffff !important;
                 font-family: 'Inter', sans-serif;
             }
 
-            /* Forzar etiquetas a blanco */
-            label, p, h1, h2, h3, span {
+            /* Títulos y Etiquetas en Blanco */
+            h1, h2, h3, label, p {
                 color: #ffffff !important;
                 font-family: 'Inter', sans-serif !important;
-                font-weight: 600;
             }
 
-            .main-header {
-                text-align: center;
-                padding: 3rem;
-                background: linear-gradient(180deg, #161b22 0%, transparent 100%);
-                border-bottom: 1px solid #30363d;
-                margin-bottom: 2rem;
+            /* RECUADROS BLANCOS CON TEXTO NEGRO (LEGIILIDAD MÁXIMA) */
+            input, select, textarea, div[data-baseweb="input"] input, div[data-baseweb="select"] {
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                border-radius: 8px !important;
+                font-weight: 500 !important;
+                border: none !important;
+            }
+            
+            /* Ajuste específico para el texto que escribes */
+            .stTextInput>div>div>input, .stNumberInput>div>div>input, .stTextArea>div>div>textarea {
+                color: #000000 !important;
+                background-color: #ffffff !important;
             }
 
-            /* Contenedores de Formulario (Dark Elevation) */
+            /* Contenedor del Formulario */
             div[data-testid="stForm"] {
                 background-color: #161b22 !important;
                 border: 1px solid #30363d !important;
-                border-radius: 16px !important;
+                border-radius: 20px !important;
                 padding: 3rem !important;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-                transition: transform 0.3s ease, border-color 0.3s ease;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important;
             }
 
-            div[data-testid="stForm"]:hover {
-                border-color: #58a6ff !important;
-                transform: translateY(-2px);
-            }
-
-            /* CONFIGURACIÓN DE INPUTS: Fondo claro para lectura fácil al escribir */
-            input, select, textarea {
-                color: #0d1117 !important; /* Texto oscuro al escribir */
-                background-color: #f0f6fc !important; /* Fondo claro en el input */
-                border-radius: 8px !important;
-                border: none !important;
-                font-weight: 500 !important;
-            }
-
-            /* Botón de Producción */
+            /* Botón Industrial */
             .stButton button {
                 background: linear-gradient(90deg, #1f6feb 0%, #58a6ff 100%) !important;
                 color: #ffffff !important;
-                height: 4rem !important;
+                height: 4.5rem !important;
                 border-radius: 12px !important;
                 font-weight: 700 !important;
-                font-size: 1.2rem !important;
+                font-size: 1.3rem !important;
                 text-transform: uppercase;
-                letter-spacing: 1px;
                 border: none !important;
                 margin-top: 2rem !important;
                 width: 100% !important;
-                transition: 0.4s all !important;
+                transition: 0.3s all;
             }
-
             .stButton button:hover {
-                box-shadow: 0 0 25px rgba(88, 166, 255, 0.4) !important;
-                filter: brightness(1.1);
-            }
-
-            /* Paneles Laterales */
-            .side-img {
-                border-radius: 12px;
-                border: 1px solid #30363d;
-                margin-bottom: 20px;
-                transition: 0.5s;
-            }
-            .side-img:hover {
-                border-color: #58a6ff;
-                transform: scale(1.02);
+                transform: scale(1.01);
+                box-shadow: 0 0 30px rgba(88, 166, 255, 0.4) !important;
             }
         </style>
     """, unsafe_allow_html=True)
 
 # =============================================================================
-# 2. MOTOR DE GENERACIÓN DE FICHA TÉCNICA (PDF)
+# 2. LÓGICA DE IMÁGENES DE BOBINADO (DINÁMICO)
 # =============================================================================
-class PDF_Taller(FPDF):
+def get_winding_image(sense_number):
+    """
+    Iván, aquí mapeamos cada número del slider con su imagen técnica.
+    He puesto placeholders, pero puedes cambiar las URLs por tus fotos reales.
+    """
+    winding_images = {
+        "1": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-1.jpg",
+        "2": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-2.jpg",
+        "3": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-3.jpg",
+        "4": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-4.jpg",
+        "5": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-5.jpg",
+        "6": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-6.jpg",
+        "7": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-7.jpg",
+        "8": "https://img.freepik.com/vector-premium/esquema-sentido-bobinado-etiquetas-posicion-8.jpg"
+    }
+    # Retornamos un placeholder dinámico si no hay URL real
+    return f"https://placehold.co/600x300/1f6feb/ffffff?text=SENTIDO+DE+SALIDA+{sense_number}"
+
+# =============================================================================
+# 3. MOTOR DE PDF PROFESIONAL (FICHA TÉCNICA)
+# =============================================================================
+class PDF_Produccion(FPDF):
     def header(self):
         self.set_fill_color(22, 27, 34)
         self.rect(0, 0, 210, 40, 'F')
         self.set_xy(10, 15)
         self.set_font('Arial', 'B', 22)
         self.set_text_color(88, 166, 255)
-        self.cell(0, 10, 'FLEXYLABEL // FICHA DE TALLER', ln=True)
+        self.cell(0, 10, 'FLEXYLABEL // ORDEN DE FABRICACION', ln=True)
         self.set_font('Arial', '', 10)
         self.set_text_color(150, 150, 150)
-        self.cell(0, 5, f'Generado: {datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}', ln=True)
+        self.cell(0, 5, f'Fecha de Emisión: {datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}', ln=True)
         self.ln(15)
 
-    def seccion(self, titulo):
+    def crear_seccion(self, titulo):
         self.ln(5)
         self.set_fill_color(48, 54, 61)
         self.set_text_color(255, 255, 255)
@@ -128,108 +126,113 @@ class PDF_Taller(FPDF):
         self.cell(0, 10, f"  {titulo}", ln=True, fill=True)
         self.ln(4)
 
-    def campo(self, label, valor, label2="", valor2=""):
+    def agregar_datos(self, l1, v1, l2="", v2=""):
         self.set_font('Arial', 'B', 10)
-        self.set_text_color(40, 40, 40)
-        self.cell(40, 8, f"{label}:", 0)
+        self.set_text_color(50, 50, 50)
+        self.cell(40, 8, f"{l1}:", 0)
         self.set_font('Arial', '', 10)
-        self.cell(55, 8, f"{valor}", 0)
-        if label2:
+        self.cell(55, 8, f"{v1}", 0)
+        if l2:
             self.set_font('Arial', 'B', 10)
-            self.cell(40, 8, f"{label2}:", 0)
+            self.cell(40, 8, f"{l2}:", 0)
             self.set_font('Arial', '', 10)
-            self.cell(0, 8, f"{valor2}", 0)
+            self.cell(0, 8, f"{v2}", 0)
         self.ln(8)
 
 # =============================================================================
-# 3. LÓGICA DE ENVÍO (DOBLE NOTIFICACIÓN)
+# 4. SISTEMA DE ENVÍO DE EMAIL (NOTIFICACIÓN DUAL)
 # =============================================================================
-def enviar_pedidos_duales(archivo_pdf, arte_final, datos):
+def despachar_pedido(pdf_path, af_file, datos):
     try:
-        remitente = st.secrets["email_usuario"]
-        password = st.secrets["email_password"]
+        user = st.secrets["email_usuario"]
+        pwd = st.secrets["email_password"]
 
-        # --- CORREO AL TALLER ---
-        msg_taller = MIMEMultipart()
-        msg_taller['From'] = remitente
-        msg_taller['To'] = "covet@etiquetes.com"
-        msg_taller['Subject'] = f"🚀 PRODUCCIÓN: {datos['cliente']} | {datos['ref']}"
-        cuerpo_t = f"Nueva orden registrada.\nCliente: {datos['cliente']}\nMaterial: {datos['material']}"
-        msg_taller.attach(MIMEText(cuerpo_t, 'plain'))
+        # --- A. NOTIFICACIÓN AL TALLER ---
+        msg_t = MIMEMultipart()
+        msg_t['From'] = user
+        msg_t['To'] = "covet@etiquetes.com"
+        msg_t['Subject'] = f"🔴 NUEVA ORDEN: {datos['cliente']} | {datos['ref']}"
+        
+        cuerpo_t = f"Se ha generado una nueva orden de producción.\n\nCliente: {datos['cliente']}\nMaterial: {datos['material']}\nCantidad: {datos['cantidad']} uds."
+        msg_t.attach(MIMEText(cuerpo_t, 'plain'))
 
-        # --- CORREO AL CLIENTE (MENSAJE DE CORTESÍA) ---
-        msg_cliente = MIMEMultipart()
-        msg_cliente['From'] = remitente
-        msg_cliente['To'] = datos['email_c']
-        msg_cliente['Subject'] = "Confirmación de Pedido - FlexyLabel Order"
+        # --- B. NOTIFICACIÓN AL CLIENTE (CORTESÍA) ---
+        msg_c = MIMEMultipart()
+        msg_c['From'] = user
+        msg_c['To'] = datos['email_c']
+        msg_c['Subject'] = "Confirmación de recepción de pedido - FlexyLabel"
+
         cuerpo_c = f"""
-        Hola {datos['cliente']},
+        Estimado/a {datos['cliente']},
 
-        Hemos recibido correctamente tu pedido de etiquetas en nuestro sistema. 
-        Nuestro equipo de taller ya tiene la ficha técnica y el diseño para empezar a trabajar.
+        Gracias por confiar en nosotros. Hemos recibido correctamente su pedido y ya se encuentra en nuestra cola de producción.
 
-        Gracias por confiar en FlexyLabel, estamos encantados de trabajar contigo.
-        Referencia del pedido: {datos['ref']}
+        Detalles registrados:
+        - Referencia: {datos['ref']}
+        - Cantidad: {datos['cantidad']} uds.
+        - Material: {datos['material']}
 
-        Un saludo,
+        Nuestro equipo de taller revisará los archivos y se pondrá en marcha lo antes posible.
+
+        Atentamente,
         El equipo de FlexyLabel.
         """
-        msg_cliente.attach(MIMEText(cuerpo_c, 'plain'))
+        msg_c.attach(MIMEText(cuerpo_c, 'plain'))
 
-        # Adjuntos comunes
-        with open(archivo_pdf, "rb") as f:
-            contenido_pdf = f.read()
-            for m in [msg_taller, msg_cliente]:
+        # Adjuntar Ficha Técnica a ambos
+        with open(pdf_path, "rb") as f:
+            pdf_content = f.read()
+            for m in [msg_t, msg_c]:
                 p = MIMEBase('application', 'octet-stream')
-                p.set_payload(contenido_pdf)
+                p.set_payload(pdf_content)
                 encoders.encode_base64(p)
-                p.add_header('Content-Disposition', f'attachment; filename="Ficha_Tecnica_{datos["ref"]}.pdf"')
+                p.add_header('Content-Disposition', f'attachment; filename="FICHA_TECNICA_{datos["cliente"]}.pdf"')
                 m.attach(p)
 
-        # Arte Final solo al Taller
+        # Adjuntar Arte Final solo al Taller
         p_af = MIMEBase('application', 'octet-stream')
-        p_af.set_payload(arte_final.getvalue())
+        p_af.set_payload(af_file.getvalue())
         encoders.encode_base64(p_af)
-        p_af.add_header('Content-Disposition', f'attachment; filename="DISENO_{datos["cliente"]}.pdf"')
-        msg_taller.attach(p_af)
+        p_af.add_header('Content-Disposition', f'attachment; filename="ARTE_FINAL_{datos["cliente"]}.pdf"')
+        msg_t.attach(p_af)
 
-        # Envío
+        # Servidor SMTP
         server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        server.login(remitente, password)
-        server.send_message(msg_taller)
-        server.send_message(msg_cliente)
+        server.login(user, pwd)
+        server.send_message(msg_t)
+        server.send_message(msg_c)
         server.quit()
         return True
     except Exception as e:
-        st.error(f"Fallo en la comunicación: {e}")
+        st.error(f"Fallo crítico en el envío: {e}")
         return False
 
 # =============================================================================
-# 4. FLUJO DE LA APLICACIÓN
+# 5. ESTRUCTURA DE LA APLICACIÓN (UI + LÓGICA)
 # =============================================================================
-inject_dark_industrial_ui()
+inject_industrial_dark_ui()
 
-st.markdown('<div class="main-header"><h1>FLEXYLABEL ORDER</h1></div>', unsafe_allow_html=True)
+# Header Industrial
+st.markdown("<h1 style='text-align:center; font-size:3rem;'>FLEXYLABEL ORDER v4.2</h1>", unsafe_allow_html=True)
 
-COL_L, COL_M, COL_R = st.columns([1, 4, 1])
+L, M, R = st.columns([1, 4, 1])
 
-with COL_L:
+with L:
     st.image("https://images.unsplash.com/photo-1610473069150-13645396b270?w=400")
     st.image("https://images.unsplash.com/photo-1563089145-599997674d42?w=400")
 
-with COL_R:
+with R:
     st.image("https://images.unsplash.com/photo-1590402494682-cd3fb53b1f71?w=400")
     st.image("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400")
 
-with COL_M:
-    with st.form("form_dark"):
-        st.write("### 🏢 DATOS GENERALES")
+with M:
+    with st.form("main_production_form"):
+        st.write("### 🏢 INFORMACIÓN COMERCIAL")
         c1, c2, c3 = st.columns([2, 2, 1])
-        cliente = c1.text_input("RAZÓN SOCIAL / CLIENTE")
-        email_c = c2.text_input("EMAIL CONFIRMACIÓN")
-        ref_p = c3.text_input("REF. PEDIDO", value="ORD-2026")
+        cliente = c1.text_input("CLIENTE / EMPRESA")
+        email_c = c2.text_input("EMAIL CONFIRMACIÓN CLIENTE")
+        ref_int = c3.text_input("REF. INTERNA", value="FX-2026")
 
-        st.write("---")
         st.write("### 📐 ESPECIFICACIONES TÉCNICAS")
         c4, c5, c6 = st.columns(3)
         ancho = c4.number_input("ANCHO (mm)", value=100)
@@ -237,48 +240,69 @@ with COL_M:
         cantidad = c6.number_input("CANTIDAD TOTAL", value=5000)
 
         c7, c8, c9 = st.columns(3)
-        material = c7.selectbox("SOPORTE", ["PP Blanco", "Couché", "Térmico", "Verjurado"])
+        material = c7.selectbox("SOPORTE", ["PP Blanco", "Couché", "Térmico", "Verjurado Cream"])
         mandril = c8.selectbox("MANDRIL", ["76mm", "40mm", "25mm"])
-        etq_r = c9.number_input("ETIQ / ROLLO", value=1000)
+        etiq_rollo = c9.number_input("ETIQ / ROLLO", value=1000)
 
         st.write("---")
-        st.write("### ⚙️ PRODUCCIÓN")
-        c10, c11 = st.columns([2, 1])
+        st.write("### ⚙️ CONFIGURACIÓN DE TALLER")
+        
+        # Selector de Sentido de Bobinado
+        sentido_bob = st.select_slider(
+            "SELECCIONE SENTIDO DE BOBINADO (1-8)",
+            options=[str(i) for i in range(1, 9)],
+            value="3"
+        )
+        
+        # IMAGEN DINÁMICA: Muestra el esquema según el slider
+        st.image(get_winding_image(sentido_bob), width=450)
+        
+
+        c10, c11 = st.columns([1, 1])
         with c10:
-            st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", width=400)
-            sentido = st.select_slider("SENTIDO BOBINADO", options=[str(i) for i in range(1, 9)], value="3")
-        with c11:
             archivo_af = st.file_uploader("ARTE FINAL (PDF)", type=["pdf"])
-            notas = st.text_area("OBSERVACIONES TALLER")
+        with c11:
+            obs = st.text_area("OBSERVACIONES PARA PRODUCCIÓN")
 
+        # Cálculos de ingeniería rápidos
         ml = (cantidad * (largo + 3)) / 1000
-        st.info(f"Metros Lineales Estimados: {round(ml, 2)} m.")
+        st.info(f"Consumo estimado de materia prima: {round(ml, 2)} metros lineales.")
 
-        if st.form_submit_button("🚀 ENVIAR ORDEN A PRODUCCIÓN"):
+        # PROCESO DE ENVÍO
+        if st.form_submit_button("🚀 LANZAR ORDEN A TALLER"):
             if not cliente or not archivo_af or not email_c:
-                st.error("Iván, faltan datos obligatorios para poder enviar.")
+                st.error("⚠️ Faltan datos críticos: Cliente, Email o Arte Final.")
             else:
-                # 1. Crear PDF
-                pdf = PDF_Taller()
+                # 1. Crear PDF Técnico
+                pdf = PDF_Produccion()
                 pdf.add_page()
-                pdf.seccion("DATOS DEL PEDIDO")
-                pdf.campo("Cliente", cliente, "Referencia", ref_p)
-                pdf.seccion("ESPECIFICACIONES")
-                pdf.campo("Material", material, "Cantidad", f"{cantidad} uds")
-                pdf.campo("Medida", f"{ancho}x{largo} mm", "Metros", f"{round(ml, 2)} m")
-                pdf.seccion("TALLER")
-                pdf.campo("Sentido", sentido, "Mandril", mandril)
+                pdf.crear_seccion("DATOS GENERALES")
+                pdf.agregar_datos("Cliente", cliente, "Referencia", ref_int)
+                pdf.crear_seccion("ESPECIFICACIONES DEL PRODUCTO")
+                pdf.agregar_datos("Medidas", f"{ancho} x {largo} mm", "Cantidad", f"{cantidad} uds")
+                pdf.agregar_datos("Material", material, "Etiq/Rollo", etiq_rollo)
+                pdf.crear_seccion("REQUERIMIENTOS DE TALLER")
+                pdf.agregar_datos("Sentido Salida", sentido_bob, "Mandril", mandril)
+                pdf.agregar_datos("Metros Estimados", f"{round(ml, 2)} m")
                 
-                temp_pdf = f"Ficha_{ref_p}.pdf"
-                pdf.output(temp_path := temp_pdf)
+                if obs:
+                    pdf.crear_seccion("OBSERVACIONES TÉCNICAS")
+                    pdf.set_font("Arial", "", 10)
+                    pdf.multi_cell(0, 8, obs)
 
-                # 2. Enviar
-                datos = {"cliente": cliente, "email_c": email_c, "material": material, "cantidad": cantidad, "ref": ref_p}
-                
-                with st.spinner("Procesando envío..."):
-                    if enviar_pedidos_duales(temp_path, archivo_af, datos):
-                        st.success("✅ ORDEN ENVIADA. El cliente ha recibido su confirmación.")
+                path_temp = f"ORDEN_{cliente}.pdf"
+                pdf.output(path_temp)
+
+                # 2. Enviar correos
+                datos_pedido = {
+                    "cliente": cliente, "email_c": email_c, "material": material,
+                    "cantidad": cantidad, "ref": ref_int
+                }
+
+                with st.spinner("Sincronizando con el servidor de correo..."):
+                    if despachar_pedido(path_temp, archivo_af, datos_pedido):
+                        st.success("✅ ORDEN REGISTRADA. El taller y el cliente han sido notificados.")
                         st.balloons()
-                        if os.path.exists(temp_path): os.remove(temp_path)
+                        if os.path.exists(path_temp): os.remove(path_temp)
 
-st.markdown("<p style='text-align:center; color:#30363d; font-size:0.8rem; margin-top:4rem;'>FLEXYLABEL CLOUD v4.2.0</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#30363d; font-size:0.8rem; margin-top:5rem;'>FLEXYLABEL INDUSTRIAL SOFTWARE v4.2 | 2026</p>", unsafe_allow_html=True)
