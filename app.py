@@ -169,7 +169,7 @@ def ejecutar_envio_total(pdf_path, af_file, datos):
         return False
 
 # =============================================================================
-# 4. APLICACIÓN PRINCIPAL
+# 4. APLICACIÓN PRINCIPAL (ORDEN IVÁN)
 # =============================================================================
 inject_full_css()
 
@@ -178,23 +178,6 @@ st.markdown("<h1 style='text-align:center;'>FLEXYLABEL <span style='font-weight:
 L, M, R = st.columns([1, 4, 1])
 
 with M:
-    # --- PARTE DINÁMICA (PARA QUE EL NÚMERO SE ACTUALICE AL MOMENTO) ---
-    st.write("### ⚙️ CONFIGURACIÓN DE BOBINADO")
-    
-    
-    st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", caption="Esquema Universal de Sentidos de Salida")
-    
-    # El slider fuera del formulario permite que Streamlit refresque la variable 'sentido_sel' instantáneamente
-    sentido_sel = st.select_slider("DESLICE PARA MARCAR EL SENTIDO (1-8)", options=[str(i) for i in range(1, 9)], value="3")
-    
-    st.markdown(f"""
-        <div style="background:#1e3a8a; padding:15px; border-radius:10px; text-align:center; border:2px solid #3b82f6;">
-            <h3 style="margin:0; color:white;">SENTIDO SELECCIONADO: {sentido_sel}</h3>
-            <p style="color:#93c5fd; margin:0; font-size:0.9rem;">Confirme que este número coincide con el mapa superior.</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # --- FORMULARIO DE DATOS ---
     with st.form("industrial_form_v4"):
         st.write("### 🏢 DATOS DEL PROYECTO")
         c1, c2, c3 = st.columns([2, 2, 1])
@@ -212,6 +195,24 @@ with M:
         material = c7.selectbox("SOPORTE", ["PP Blanco", "PP Transparente", "Couché", "Térmico", "Verjurado"])
         mandril = c8.selectbox("MANDRIL", ["76mm", "40mm", "25mm"])
         etq_r = c9.number_input("ETIQUETAS / ROLLO", value=1000)
+
+        st.write("---")
+        st.write("### ⚙️ CONFIGURACIÓN DE BOBINADO")
+        
+        # Mapa de referencia
+        
+        st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", caption="Esquema Universal de Sentidos de Salida")
+        
+        # Selector
+        sentido_sel = st.select_slider("DESLICE PARA MARCAR EL SENTIDO (1-8)", options=[str(i) for i in range(1, 9)], value="3")
+        
+        # Confirmación dinámica
+        st.markdown(f"""
+            <div style="background:#1e3a8a; padding:15px; border-radius:10px; text-align:center; border:2px solid #3b82f6;">
+                <h3 style="margin:0; color:white;">SENTIDO SELECCIONADO: {sentido_sel}</h3>
+                <p style="color:#93c5fd; margin:0; font-size:0.9rem;">Confirme que este número coincide con el mapa superior.</p>
+            </div>
+        """, unsafe_allow_html=True)
 
         st.write("### 📂 ARCHIVOS Y ACABADOS")
         c10, c11 = st.columns([1, 1])
@@ -242,7 +243,6 @@ with M:
                 pdf.fila("Medidas", f"{ancho} x {largo} mm", "Cantidad", f"{cantidad} uds")
                 pdf.fila("Material", material, "Etiq/Rollo", etq_r)
                 pdf.seccion("TALLER")
-                # Aquí usamos el 'sentido_sel' que capturamos fuera del form
                 pdf.fila("Sentido Salida", sentido_sel, "Mandril", mandril)
                 pdf.fila("Metros Lineales", f"{round(ml, 2)} m", "M2 Totales", f"{round(m2, 2)} m2")
                 
