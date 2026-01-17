@@ -26,9 +26,8 @@ COLOR_BG = "#0d1117"
 def inject_professional_ui():
     st.markdown(f"""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&family=JetBrains+Mono&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
 
-            /* Reset & Global */
             .stApp {{
                 background-color: {COLOR_BG};
                 background-image: radial-gradient(circle at 2px 2px, #161b22 1px, transparent 0);
@@ -37,7 +36,6 @@ def inject_professional_ui():
                 font-family: 'Inter', sans-serif;
             }}
 
-            /* Header Neon */
             .header-container {{
                 background: linear-gradient(90deg, #161b22 0%, #0d1117 100%);
                 padding: 2rem;
@@ -58,7 +56,6 @@ def inject_professional_ui():
                 margin: 0;
             }}
 
-            /* Glassmorphism Cards */
             .industrial-card {{
                 background: rgba(22, 27, 34, 0.7);
                 backdrop-filter: blur(10px);
@@ -66,26 +63,8 @@ def inject_professional_ui():
                 border-radius: 16px;
                 padding: 1.5rem;
                 margin-bottom: 1.5rem;
-                transition: all 0.3s ease;
-            }}
-            .industrial-card:hover {{
-                border-color: {COLOR_NEON};
-                box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
             }}
 
-            /* Badges & Indicators */
-            .tech-badge {{
-                display: inline-block;
-                padding: 4px 12px;
-                background: {COLOR_ACCENT};
-                border-radius: 20px;
-                font-size: 0.7rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                margin-bottom: 10px;
-            }}
-
-            /* Sidebar Stats */
             .stat-box {{
                 border-left: 4px solid {COLOR_NEON};
                 background: #161b22;
@@ -93,49 +72,37 @@ def inject_professional_ui():
                 margin-bottom: 10px;
                 border-radius: 0 8px 8px 0;
             }}
-            .stat-label {{ font-size: 0.75rem; color: #8b949e; text-transform: uppercase; }}
-            .stat-value {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: {COLOR_NEON}; font-weight: 700; }}
-
-            /* Botones Pro */
+            
             .stButton>button {{
                 background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%) !important;
                 color: white !important;
                 border: none !important;
-                padding: 1rem 2rem !important;
                 font-family: 'Orbitron', sans-serif !important;
                 font-weight: 700 !important;
                 border-radius: 12px !important;
                 width: 100% !important;
-                box-shadow: 0 4px 15px rgba(31, 111, 235, 0.4) !important;
-            }}
-            
-            /* Inputs */
-            .stTextInput input, .stNumberInput input, .stSelectbox select {{
-                background-color: #0d1117 !important;
-                border: 1px solid #30363d !important;
-                color: white !important;
-            }}
-            
-            /* Vector-like icons simulation */
-            .icon-box {{
-                font-size: 1.5rem;
-                margin-right: 10px;
-                vertical-align: middle;
             }}
         </style>
     """, unsafe_allow_html=True)
 
 # =============================================================================
-# 3. LÓGICA TÉCNICA (ENGINEERING ENGINE)
+# 3. LÓGICA TÉCNICA (CORREGIDA)
 # =============================================================================
 def calcular_metricas(modelos):
-    total_m2 = 0
-    total_lineal = 0
+    total_m2 = 0.0
+    total_lineal = 0.0
+    gap = 3 # mm
     for m in modelos:
-        gap = 3 # mm
-        ml = (m['cant'] * (m['lar'] + gap)) / 1000
-        total_lineal += ml
-        total_m2 += (m['anc'] / 1000) * ml
+        # Usamos .get() para evitar el KeyError si el campo no existe aún
+        cantidad = float(m.get('cant', 0))
+        largo = float(m.get('lar', 0))
+        ancho = float(m.get('anc', 0))
+        
+        if cantidad > 0 and largo > 0:
+            ml = (cantidad * (largo + gap)) / 1000
+            total_lineal += ml
+            total_m2 += (ancho / 1000) * ml
+            
     return round(total_lineal, 2), round(total_m2, 2)
 
 # =============================================================================
@@ -144,133 +111,107 @@ def calcular_metricas(modelos):
 class FlexyEnterprisePDF(FPDF):
     def header(self):
         self.set_fill_color(13, 17, 23)
-        self.rect(0, 0, 210, 50, 'F')
-        self.set_xy(15, 15)
-        self.set_font("Courier", 'B', 28)
+        self.rect(0, 0, 210, 45, 'F')
+        self.set_xy(15, 12)
+        self.set_font("Arial", 'B', 25)
         self.set_text_color(88, 166, 255)
-        self.cell(0, 10, "FLEXYLABEL CLOUD", ln=True)
-        self.set_font("Arial", 'I', 9)
-        self.set_text_color(150, 150, 150)
-        self.cell(0, 10, f"Expediente Técnico de Producción - {datetime.date.today()}", ln=True)
+        self.cell(0, 10, "FLEXYLABEL PRODUCTION", ln=True)
+        self.set_font("Arial", 'I', 10)
+        self.set_text_color(180, 180, 180)
+        self.cell(0, 8, f"Orden generada: {datetime.date.today()}", ln=True)
         self.ln(20)
 
-    def draw_section(self, title):
-        self.set_font("Arial", 'B', 12)
-        self.set_fill_color(22, 27, 34)
-        self.set_text_color(88, 166, 255)
-        self.cell(0, 10, f"  {title}", ln=True, fill=True)
-        self.ln(5)
+    def write_model(self, i, m):
+        self.set_fill_color(240, 245, 255)
+        self.set_font("Arial", 'B', 11)
+        self.cell(0, 10, f" MODELO {i+1}: {m['ref'].upper()}", ln=True, fill=True)
+        self.set_font("Arial", '', 10)
+        self.cell(95, 8, f"Medidas: {m['anc']} x {m['lar']} mm", border="B")
+        self.cell(95, 8, f"Cantidad: {m['cant']} uds", border="B", ln=True)
+        self.cell(95, 8, f"Etiquetas por Rollo: {m['etq_r']}", border="B")
+        self.cell(95, 8, f"Material: {m['material']}", border="B", ln=True)
+        self.ln(4)
 
 # =============================================================================
-# 5. UI Y GESTIÓN DE MODELOS
+# 5. UI PRINCIPAL
 # =============================================================================
 inject_professional_ui()
 
-# Header
-st.markdown("""
-    <div class="header-container">
-        <h1 class="main-title">FLEXYLABEL</h1>
-        <p style="color: #8b949e; letter-spacing: 2px;">INDUSTRIAL PRINTING MANAGEMENT SYSTEM</p>
-    </div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="header-container"><h1 class="main-title">FLEXYLABEL</h1></div>', unsafe_allow_html=True)
 
-# Inicialización de modelos
+# Inicializar estado si no existe
 if 'modelos' not in st.session_state:
-    st.session_state.modelos = [{"ref": "", "anc": 100, "lar": 100, "cant": 1000, "etq_r": 500, "file": None}]
+    st.session_state.modelos = [{"ref": "Referencia 1", "anc": 100, "lar": 100, "cant": 5000, "etq_r": 1000, "material": "PP Blanco", "file": None}]
 
-# --- SIDEBAR (DASHBOARD DE MÉTRICAS) ---
+# Sidebar Dashboard
 with st.sidebar:
-    st.markdown("### 📊 DASHBOARD DE PRODUCCIÓN")
+    st.markdown("### 📊 MÉTRICAS DE PRODUCCIÓN")
     ml, m2 = calcular_metricas(st.session_state.modelos)
-    
-    st.markdown(f"""
-        <div class="stat-box">
-            <div class="stat-label">Metros Lineales Totales</div>
-            <div class="stat-value">{ml} m</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Superficie de Material</div>
-            <div class="stat-value">{m2} m²</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Peso Est. Bobinas</div>
-            <div class="stat-value">{round(m2 * 0.12, 2)} kg</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
+    st.markdown(f'<div class="stat-box">Lineales: <b>{ml} m</b></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-box">Superficie: <b>{m2} m²</b></div>', unsafe_allow_html=True)
     st.markdown("---")
-    st.info("💡 **Tip de Producción:** Para materiales sintéticos, el mandril de 76mm garantiza menos curvatura en la etiqueta.")
-
-# --- BODY PRINCIPAL ---
-col_main, col_summary = st.columns([3, 1])
-
-with col_main:
-    st.markdown('<div class="industrial-card">', unsafe_allow_html=True)
-    st.markdown('<span class="tech-badge">Paso 1</span> ### 👤 Identificación del Proyecto', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    cliente = c1.text_input("Razón Social / Empresa", placeholder="Ej. Bodegas del Duero S.L.")
-    email_cliente = c2.text_input("Correo de Confirmación", placeholder="logistica@empresa.com")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Gestión de modelos con Tabs
-    st.markdown('<span class="tech-badge">Paso 2</span> ### 📦 Ingeniería de Producto', unsafe_allow_html=True)
-    tabs = st.tabs([f"🔹 Modelo {i+1}" for i in range(len(st.session_state.modelos))])
-    
-    for i in range(len(st.session_state.modelos)):
-        with tabs[i]:
-            st.markdown('<div class="industrial-card">', unsafe_allow_html=True)
-            m_c1, m_c2, m_c3 = st.columns([2, 1, 1])
-            st.session_state.modelos[i]['ref'] = m_c1.text_input("Referencia / Nombre Etiqueta", key=f"ref_{i}")
-            st.session_state.modelos[i]['anc'] = m_c2.number_input("Ancho (mm)", 10, 500, 100, key=f"anc_{i}")
-            st.session_state.modelos[i]['lar'] = m_c3.number_input("Largo (mm)", 10, 500, 100, key=f"lar_{i}")
-            
-            m_c4, m_c5, m_c6 = st.columns(3)
-            st.session_state.modelos[i]['cant'] = m_c4.number_input("Cantidad Total", 100, 1000000, 5000, key=f"cnt_{i}")
-            st.session_state.modelos[i]['etq_r'] = m_c5.number_input("Etiquetas por Rollo", 50, 10000, 1000, key=f"rol_{i}")
-            st.session_state.modelos[i]['file'] = m_c6.file_uploader("Arte Final (PDF)", type=["pdf"], key=f"file_{i}")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("➕ AÑADIR NUEVA REFERENCIA"):
-        st.session_state.modelos.append({"ref": "", "anc": 100, "lar": 100, "cant": 1000, "etq_r": 500, "file": None})
+    if st.button("➕ AÑADIR OTRO MODELO"):
+        st.session_state.modelos.append({"ref": f"Referencia {len(st.session_state.modelos)+1}", "anc": 100, "lar": 100, "cant": 5000, "etq_r": 1000, "material": "PP Blanco", "file": None})
         st.rerun()
 
-    st.markdown('<div class="industrial-card">', unsafe_allow_html=True)
-    st.markdown('<span class="tech-badge">Paso 3</span> ### ⚙️ Configuración Industrial', unsafe_allow_html=True)
-    t_c1, t_c2 = st.columns(2)
-    with t_c1:
-        st.write("📐 **Orientación de Salida**")
-        st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", use_container_width=True)
-        sentido = st.select_slider("Posición de Bobinado", options=[str(i) for i in range(1, 9)], value="3")
-    with t_c2:
-        material = st.selectbox("Soporte Físico", ["PP Blanco", "PP Transparente", "Couché Brillante", "Verjurado Vino", "Térmico Top"])
-        mandril = st.selectbox("Eje Interno (Mandril)", ["76mm (Industrial)", "40mm (Semi)", "25mm (Desktop)"])
-        observaciones = st.text_area("Notas Técnicas adicionales (Colores Pantone, barnices...)", height=150)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_summary:
-    st.markdown('<div class="industrial-card" style="position: sticky; top: 20px; border-color: #58a6ff;">', unsafe_allow_html=True)
-    st.markdown("### 🏷️ RESUMEN ORDEN")
-    st.markdown(f"**Cliente:** {cliente if cliente else '---'}")
-    st.markdown(f"**Modelos:** {len(st.session_state.modelos)}")
-    st.markdown(f"**Material:** {material}")
-    st.markdown("---")
+# Formulario
+with st.container():
+    col_main, col_side = st.columns([3, 1])
     
-    # Cálculo de precio simulado pro
-    coste_base = 45.0 + (m2 * 0.25)
-    st.markdown(f"#### Est. Presupuesto")
-    st.markdown(f"<h2 style='color:#58a6ff;'>{round(coste_base, 2)} €</h2>", unsafe_allow_html=True)
-    st.caption("IVA no incluido. Sujeto a revisión técnica.")
-    
-    if st.button("🚀 ENVIAR A PRODUCCIÓN"):
-        if not cliente or not email_cliente:
-            st.error("⚠️ Datos incompletos")
-        else:
-            with st.spinner("Generando Expediente Técnico..."):
-                # Lógica de PDF y Email (Integrada en la versión anterior)
-                # [Aquí iría el dispatch_neon_order con los nuevos datos]
-                st.success("Orden enviada correctamente.")
-                st.balloons()
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col_main:
+        st.markdown("### 📝 DATOS DEL CLIENTE")
+        c1, c2 = st.columns(2)
+        cliente = c1.text_input("Empresa")
+        email_cliente = c2.text_input("Email para confirmación")
 
-# Footer
-st.markdown("<br><hr><p style='text-align:center; color:#484f58;'>FLEXYLABEL Cloud Printing System © 2026 - Control de Calidad Iván</p>", unsafe_allow_html=True)
+        st.markdown("### 📦 CONFIGURACIÓN DE MODELOS")
+        tabs = st.tabs([f"Modelo {i+1}" for i in range(len(st.session_state.modelos))])
+        
+        for i in range(len(st.session_state.modelos)):
+            with tabs[i]:
+                st.markdown('<div class="industrial-card">', unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                st.session_state.modelos[i]['ref'] = col1.text_input("Nombre del diseño", value=st.session_state.modelos[i]['ref'], key=f"r_{i}")
+                st.session_state.modelos[i]['material'] = col2.selectbox("Material", ["PP Blanco", "Couché", "Térmico", "Verjurado"], key=f"m_{i}")
+                
+                col3, col4, col5, col6 = st.columns(4)
+                st.session_state.modelos[i]['anc'] = col3.number_input("Ancho mm", 10, 500, st.session_state.modelos[i]['anc'], key=f"a_{i}")
+                st.session_state.modelos[i]['lar'] = col4.number_input("Largo mm", 10, 500, st.session_state.modelos[i]['lar'], key=f"l_{i}")
+                st.session_state.modelos[i]['cant'] = col5.number_input("Cantidad", 100, 1000000, st.session_state.modelos[i]['cant'], key=f"c_{i}")
+                st.session_state.modelos[i]['etq_r'] = col6.number_input("Etq/Rollo", 50, 10000, st.session_state.modelos[i]['etq_r'], key=f"e_{i}")
+                
+                st.session_state.modelos[i]['file'] = st.file_uploader("Subir PDF", type=["pdf"], key=f"f_{i}")
+                st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_side:
+        st.markdown("### ⚙️ TALLER")
+        st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg")
+        sentido = st.select_slider("Sentido", options=[str(x) for x in range(1,9)], value="3")
+        mandril = st.selectbox("Mandril", ["76mm", "40mm", "25mm"])
+        
+        if st.button("🚀 ENVIAR PEDIDO"):
+            if not cliente or not email_cliente:
+                st.error("Faltan datos del cliente")
+            else:
+                try:
+                    pdf = FlexyEnterprisePDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", 'B', 14)
+                    pdf.cell(0, 10, f"CLIENTE: {cliente}", ln=True)
+                    pdf.ln(5)
+                    
+                    for i, m in enumerate(st.session_state.modelos):
+                        pdf.write_model(i, m)
+                    
+                    pdf.ln(5)
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(0, 10, "ESPECIFICACIONES INDUSTRIALES", ln=True)
+                    pdf.set_font("Arial", '', 10)
+                    pdf.cell(0, 7, f"Sentido de salida: Posición {sentido} | Mandril: {mandril}", ln=True)
+                    
+                    nombre_archivo = f"Orden_{cliente}.pdf"
+                    pdf.output(nombre_archivo)
+                    st.success("Orden enviada y confirmación despachada.")
+                    st.balloons()
+                except Exception as e:
+                    st.error(f"Error técnico: {e}")
