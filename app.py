@@ -12,25 +12,27 @@ import math
 import random
 
 # =============================================================================
-# 1. CORE CONFIGURATION & NEON THEME (CSS INJECTION)
+# 1. CORE CONFIGURATION & NEON THEME (CSS ACTUALIZADO CON EFECTOS HOVER)
 # =============================================================================
 DESTINATARIO_FINAL = "covet@etiquetes.com"
 COLOR_FONDO_DARK = "#0d1117"  
 COLOR_CARD = "#161b22"        
 COLOR_NEON_BLUE = "#58a6ff"   
-COLOR_NEON_GLOW = "0 0 15px rgba(88, 166, 255, 0.5)"
+COLOR_NEON_GLOW = "0 0 20px rgba(88, 166, 255, 0.4)"
 
 def inject_dark_neon_ui():
     st.markdown(f"""
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
 
+            /* Configuración Global */
             .stApp {{
                 background-color: {COLOR_FONDO_DARK};
                 color: #c9d1d9;
                 font-family: 'Inter', sans-serif;
             }}
 
+            /* Título con animación de entrada */
             .neon-title {{
                 font-family: 'Orbitron', sans-serif;
                 font-size: 3.5rem;
@@ -40,44 +42,75 @@ def inject_dark_neon_ui():
                 text-align: center;
                 margin-bottom: 0.5rem;
                 letter-spacing: 4px;
+                animation: fadeIn 2s;
             }}
 
+            /* EFECTO DINÁMICO EN LAS TARJETAS (EVITA EL LOOK WINDOWS 95) */
             .st-emotion-cache-1r6slb0 {{
                 background-color: {COLOR_CARD} !important;
                 border: 1px solid #30363d !important;
-                border-radius: 15px !important;
+                border-radius: 20px !important;
                 padding: 2.5rem !important;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             }}
 
+            /* Cuando el cursor pasa por encima de un bloque */
+            .st-emotion-cache-1r6slb0:hover {{
+                transform: translateY(-5px);
+                border-color: {COLOR_NEON_BLUE} !important;
+                box-shadow: 0 10px 30px rgba(88, 166, 255, 0.2) !important;
+            }}
+
+            /* Inputs con borde reactivo */
             .stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {{
                 background-color: {COLOR_FONDO_DARK} !important;
                 color: {COLOR_NEON_BLUE} !important;
                 border: 1px solid #30363d !important;
-                border-radius: 8px !important;
-                font-weight: 600 !important;
+                border-radius: 10px !important;
+                transition: 0.3s;
             }}
 
+            .stTextInput input:focus {{
+                border-color: {COLOR_NEON_BLUE} !important;
+                box-shadow: {COLOR_NEON_GLOW} !important;
+            }}
+
+            /* Etiquetas */
             label {{
                 color: {COLOR_NEON_BLUE} !important;
                 font-family: 'Orbitron', sans-serif !important;
-                font-size: 0.9rem !important;
-                text-transform: uppercase;
+                font-size: 0.85rem !important;
                 letter-spacing: 1px;
             }}
 
+            /* Botón con efecto pulsante en hover */
             .stButton button {{
                 background: linear-gradient(90deg, #1f6feb 0%, #58a6ff 100%) !important;
                 color: white !important;
                 border: none !important;
-                height: 3.5rem !important;
+                height: 3.8rem !important;
                 font-family: 'Orbitron', sans-serif !important;
                 font-weight: 700 !important;
-                border-radius: 10px !important;
-                box-shadow: {COLOR_NEON_GLOW} !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 15px rgba(31, 111, 235, 0.3) !important;
+                transition: 0.4s all ease !important;
                 width: 100% !important;
+                text-transform: uppercase;
             }}
 
+            .stButton button:hover {{
+                transform: scale(1.02) !important;
+                box-shadow: 0 0 25px rgba(88, 166, 255, 0.6) !important;
+                letter-spacing: 2px;
+            }}
+
+            @keyframes fadeIn {{
+                from {{ opacity: 0; }}
+                to {{ opacity: 1; }}
+            }}
+
+            /* Ocultar basura de Streamlit */
             #MainMenu {{visibility: hidden;}}
             footer {{visibility: hidden;}}
             
@@ -85,7 +118,7 @@ def inject_dark_neon_ui():
                 border: 0;
                 height: 1px;
                 background: linear-gradient(to right, transparent, {COLOR_NEON_BLUE}, transparent);
-                margin: 2rem 0;
+                margin: 2.5rem 0;
             }}
         </style>
     """, unsafe_allow_html=True)
@@ -132,14 +165,14 @@ class FlexyDarkPDF(FPDF):
         self.ln(5)
 
 # =============================================================================
-# 4. SECURE DISPATCHER (CORREGIDO CON DOBLE ENVÍO Y CONTROL DE ERRORES)
+# 4. SECURE DISPATCHER
 # =============================================================================
 def dispatch_neon_order(pdf_path, design_file, d):
     try:
         sender = st.secrets["email_usuario"]
         pwd = st.secrets["email_password"]
         
-        # Lista de destinatarios: Taller y Cliente
+        # Envío a Taller y copia al Cliente
         destinatarios = [DESTINATARIO_FINAL, d['email']]
         
         for recipient in destinatarios:
@@ -148,7 +181,7 @@ def dispatch_neon_order(pdf_path, design_file, d):
             msg['From'] = sender
             msg['To'] = recipient
             
-            cuerpo = f"SISTEMA FLEXYLABEL\nORDEN: {d['ref']}\nCLIENTE: {d['cliente']}\nCANTIDAD: {d['cantidad']} uds"
+            cuerpo = f"SISTEMA FLEXYLABEL\n\nOrden de Fabricación para: {d['cliente']}\nReferencia: {d['ref']}\nCantidad: {d['cantidad']} unidades."
             msg.attach(MIMEText(cuerpo, 'plain'))
 
             with open(pdf_path, "rb") as f:
@@ -171,7 +204,7 @@ def dispatch_neon_order(pdf_path, design_file, d):
             server.quit()
         return True
     except Exception as e:
-        st.error(f"Error técnico: {e}")
+        st.error(f"Fallo en el protocolo: {e}")
         return False
 
 # =============================================================================
@@ -209,38 +242,43 @@ def main():
             st.markdown("### 🌀 CONFIGURACIÓN DE SALIDA")
             col6, col7 = st.columns(2)
             with col6:
-                st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", caption="Esquema de Sentidos")
+                st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", caption="Esquema de Posiciones Técnicas")
                 sentido = st.select_slider("POSICIÓN DE BOBINADO", options=[str(i) for i in range(1, 9)], value="3")
             with col7:
                 archivo_af = st.file_uploader("ARTE FINAL (PDF)", type=["pdf"])
                 observaciones = st.text_area("OBSERVACIONES TÉCNICAS")
 
             m_lineales, m2_totales = get_label_specs(cantidad, ancho, largo)
-            st.info(f"Consumo: {m_lineales} ml | {m2_totales} m²")
+            st.markdown(f"""
+                <div style="background:#161b22; padding:15px; border-radius:12px; border-left:4px solid #58a6ff;">
+                    <span style="color:#58a6ff; font-weight:bold;">INFO TÉCNICA:</span> {m_lineales} ml | {m2_totales} m²
+                </div>
+            """, unsafe_allow_html=True)
 
+            st.markdown("<br>", unsafe_allow_html=True)
             btn_submit = st.form_submit_button("Lanzar Orden a Producción")
 
             if btn_submit:
                 if not cliente or not archivo_af or not email_c:
-                    st.error("ERROR: REVISA CLIENTE, EMAIL Y ARCHIVO.")
+                    st.error("DATOS INCOMPLETOS: CLIENTE, EMAIL Y ARTE FINAL SON OBLIGATORIOS.")
                 else:
-                    datos = {
-                        "cliente": cliente, "email": email_c, "ref": referencia,
-                        "cantidad": cantidad, "material": material, "rollo": etq_rollo
-                    }
-                    pdf = FlexyDarkPDF(datos)
-                    pdf.add_page()
-                    pdf.draw_data_block("GENERAL", {"Cliente": cliente, "Ref": referencia})
-                    pdf.draw_data_block("TÉCNICO", {"Medida": f"{ancho}x{largo}mm", "Cant": cantidad, "Por Rollo": etq_rollo})
-                    pdf.draw_data_block("BOBINADO", {"Sentido": sentido, "Mandril": mandril})
-                    
-                    path = f"ORDEN_{cliente}.pdf".replace(" ", "_")
-                    pdf.output(path)
-                    
-                    if dispatch_neon_order(path, archivo_af, datos):
-                        st.success("ORDEN ENVIADA A TALLER Y CLIENTE")
-                        st.balloons()
-                        if os.path.exists(path): os.remove(path)
+                    with st.spinner("ENVIANDO ORDEN..."):
+                        datos = {
+                            "cliente": cliente, "email": email_c, "ref": referencia,
+                            "cantidad": cantidad, "material": material
+                        }
+                        pdf = FlexyDarkPDF(datos)
+                        pdf.add_page()
+                        pdf.draw_data_block("GENERAL", {"Cliente": cliente, "Ref": referencia})
+                        pdf.draw_data_block("TÉCNICO", {"Ancho": ancho, "Largo": largo, "Cantidad": cantidad})
+                        
+                        path = f"ORDEN_{cliente}.pdf".replace(" ", "_")
+                        pdf.output(path)
+                        
+                        if dispatch_neon_order(path, archivo_af, datos):
+                            st.success("SISTEMA ACTUALIZADO: ORDEN ENVIADA")
+                            st.balloons()
+                            if os.path.exists(path): os.remove(path)
 
 if __name__ == "__main__":
     main()
