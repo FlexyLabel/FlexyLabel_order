@@ -7,211 +7,240 @@ from email.mime.base import MIMEBase
 from email import encoders
 import datetime
 import os
-import math
 import time
+import math
+import random
 
 # =============================================================================
-# 1. CONFIGURACIÓN DE PÁGINA Y MARCA
+# 1. CORE CONFIGURATION & NEON THEME (CSS INJECTION)
 # =============================================================================
-st.set_page_config(page_title="FLEXYLABEL | Cloud Manufacturing", layout="wide", page_icon="🏷️")
+DESTINATARIO_FINAL = "covet@etiquetes.com"
+COLOR_FONDO_DARK = "#0d1117"  
+COLOR_CARD = "#161b22"        
+COLOR_NEON_BLUE = "#58a6ff"   
+COLOR_NEON_GLOW = "0 0 15px rgba(88, 166, 255, 0.5)"
 
-DESTINATARIO_TALLER = "covet@etiquetes.com"
-COLOR_NEON = "#58a6ff"
-COLOR_ACCENT = "#1f6feb"
-COLOR_BG = "#0d1117"
-
-# =============================================================================
-# 2. MOTOR CSS AVANZADO (DISEÑO PROFESIONAL)
-# =============================================================================
-def inject_professional_ui():
+def inject_dark_neon_ui():
     st.markdown(f"""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
 
             .stApp {{
-                background-color: {COLOR_BG};
-                background-image: radial-gradient(circle at 2px 2px, #161b22 1px, transparent 0);
-                background-size: 40px 40px;
+                background-color: {COLOR_FONDO_DARK};
                 color: #c9d1d9;
                 font-family: 'Inter', sans-serif;
             }}
 
-            .header-container {{
-                background: linear-gradient(90deg, #161b22 0%, #0d1117 100%);
-                padding: 2rem;
-                border-bottom: 2px solid {COLOR_NEON};
-                margin-bottom: 2rem;
-                border-radius: 0 0 20px 20px;
-                text-align: center;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            }}
-
-            .main-title {{
+            .neon-title {{
                 font-family: 'Orbitron', sans-serif;
-                font-size: 3rem;
-                letter-spacing: 5px;
-                background: linear-gradient(90deg, #58a6ff, #1f6feb);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                margin: 0;
+                font-size: 3.5rem;
+                font-weight: 700;
+                color: {COLOR_NEON_BLUE};
+                text-shadow: {COLOR_NEON_GLOW};
+                text-align: center;
+                margin-bottom: 0.5rem;
+                letter-spacing: 4px;
             }}
 
-            .industrial-card {{
-                background: rgba(22, 27, 34, 0.7);
-                backdrop-filter: blur(10px);
-                border: 1px solid #30363d;
-                border-radius: 16px;
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
+            .st-emotion-cache-1r6slb0 {{
+                background-color: {COLOR_CARD} !important;
+                border: 1px solid #30363d !important;
+                border-radius: 15px !important;
+                padding: 2.5rem !important;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
             }}
 
-            .stat-box {{
-                border-left: 4px solid {COLOR_NEON};
-                background: #161b22;
-                padding: 15px;
-                margin-bottom: 10px;
-                border-radius: 0 8px 8px 0;
+            .stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {{
+                background-color: {COLOR_FONDO_DARK} !important;
+                color: {COLOR_NEON_BLUE} !important;
+                border: 1px solid #30363d !important;
+                border-radius: 8px !important;
+                font-weight: 600 !important;
             }}
-            
-            .stButton>button {{
-                background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%) !important;
+
+            label {{
+                color: {COLOR_NEON_BLUE} !important;
+                font-family: 'Orbitron', sans-serif !important;
+                font-size: 0.9rem !important;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }}
+
+            .stButton button {{
+                background: linear-gradient(90deg, #1f6feb 0%, #58a6ff 100%) !important;
                 color: white !important;
                 border: none !important;
+                height: 3.5rem !important;
                 font-family: 'Orbitron', sans-serif !important;
                 font-weight: 700 !important;
-                border-radius: 12px !important;
+                border-radius: 10px !important;
+                box-shadow: {COLOR_NEON_GLOW} !important;
                 width: 100% !important;
+            }}
+
+            #MainMenu {{visibility: hidden;}}
+            footer {{visibility: hidden;}}
+            
+            hr {{
+                border: 0;
+                height: 1px;
+                background: linear-gradient(to right, transparent, {COLOR_NEON_BLUE}, transparent);
+                margin: 2rem 0;
             }}
         </style>
     """, unsafe_allow_html=True)
 
 # =============================================================================
-# 3. LÓGICA TÉCNICA (CORREGIDA)
+# 2. CALCULATION ENGINE
 # =============================================================================
-def calcular_metricas(modelos):
-    total_m2 = 0.0
-    total_lineal = 0.0
-    gap = 3 # mm
-    for m in modelos:
-        # Usamos .get() para evitar el KeyError si el campo no existe aún
-        cantidad = float(m.get('cant', 0))
-        largo = float(m.get('lar', 0))
-        ancho = float(m.get('anc', 0))
-        
-        if cantidad > 0 and largo > 0:
-            ml = (cantidad * (largo + gap)) / 1000
-            total_lineal += ml
-            total_m2 += (ancho / 1000) * ml
-            
-    return round(total_lineal, 2), round(total_m2, 2)
+def get_label_specs(cantidad, ancho, largo):
+    gap = 3 
+    metros_lineales = (cantidad * (largo + gap)) / 1000
+    m2 = (ancho / 1000) * metros_lineales
+    return round(metros_lineales, 2), round(m2, 2)
 
 # =============================================================================
-# 4. GENERADOR DE PDF CORPORATIVO
+# 3. PREMIUM PDF RENDERER
 # =============================================================================
-class FlexyEnterprisePDF(FPDF):
+class FlexyDarkPDF(FPDF):
+    def __init__(self, datos):
+        super().__init__()
+        self.d = datos
+        self.blue_neon = (88, 166, 255)
+        self.dark_bg = (13, 17, 23)
+
     def header(self):
-        self.set_fill_color(13, 17, 23)
-        self.rect(0, 0, 210, 45, 'F')
-        self.set_xy(15, 12)
-        self.set_font("Arial", 'B', 25)
-        self.set_text_color(88, 166, 255)
-        self.cell(0, 10, "FLEXYLABEL PRODUCTION", ln=True)
-        self.set_font("Arial", 'I', 10)
-        self.set_text_color(180, 180, 180)
-        self.cell(0, 8, f"Orden generada: {datetime.date.today()}", ln=True)
+        self.set_fill_color(*self.dark_bg)
+        self.rect(0, 0, 210, 50, 'F')
+        self.set_xy(10, 15)
+        self.set_font("Courier", 'B', 30)
+        self.set_text_color(*self.blue_neon)
+        self.cell(0, 15, "FLEXYLABEL // PRODUCTION", ln=True, align='L')
         self.ln(20)
 
-    def write_model(self, i, m):
-        self.set_fill_color(240, 245, 255)
-        self.set_font("Arial", 'B', 11)
-        self.cell(0, 10, f" MODELO {i+1}: {m['ref'].upper()}", ln=True, fill=True)
-        self.set_font("Arial", '', 10)
-        self.cell(95, 8, f"Medidas: {m['anc']} x {m['lar']} mm", border="B")
-        self.cell(95, 8, f"Cantidad: {m['cant']} uds", border="B", ln=True)
-        self.cell(95, 8, f"Etiquetas por Rollo: {m['etq_r']}", border="B")
-        self.cell(95, 8, f"Material: {m['material']}", border="B", ln=True)
-        self.ln(4)
+    def draw_data_block(self, title, items):
+        self.set_font("Courier", 'B', 12)
+        self.set_fill_color(30, 35, 45)
+        self.set_text_color(*self.blue_neon)
+        self.cell(0, 10, f" > {title}", ln=True, fill=True)
+        self.ln(2)
+        for key, value in items.items():
+            self.set_font("Arial", 'B', 10)
+            self.cell(45, 7, f"{key}:", 0)
+            self.set_font("Arial", '', 10)
+            self.cell(0, 7, str(value), 0, 1)
+        self.ln(5)
 
 # =============================================================================
-# 5. UI PRINCIPAL
+# 4. SECURE DISPATCHER (CORREGIDO CON DOBLE ENVÍO Y CONTROL DE ERRORES)
 # =============================================================================
-inject_professional_ui()
+def dispatch_neon_order(pdf_path, design_file, d):
+    try:
+        sender = st.secrets["email_usuario"]
+        pwd = st.secrets["email_password"]
+        
+        # Lista de destinatarios: Taller y Cliente
+        destinatarios = [DESTINATARIO_FINAL, d['email']]
+        
+        for recipient in destinatarios:
+            msg = MIMEMultipart()
+            msg['Subject'] = f"🔵 ORDEN: {d['cliente']} | {d['ref']}"
+            msg['From'] = sender
+            msg['To'] = recipient
+            
+            cuerpo = f"SISTEMA FLEXYLABEL\nORDEN: {d['ref']}\nCLIENTE: {d['cliente']}\nCANTIDAD: {d['cantidad']} uds"
+            msg.attach(MIMEText(cuerpo, 'plain'))
 
-st.markdown('<div class="header-container"><h1 class="main-title">FLEXYLABEL</h1></div>', unsafe_allow_html=True)
+            with open(pdf_path, "rb") as f:
+                part = MIMEBase('application', 'pdf')
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', f'attachment; filename={pdf_path}')
+                msg.attach(part)
 
-# Inicializar estado si no existe
-if 'modelos' not in st.session_state:
-    st.session_state.modelos = [{"ref": "Referencia 1", "anc": 100, "lar": 100, "cant": 5000, "etq_r": 1000, "material": "PP Blanco", "file": None}]
+            if design_file:
+                part2 = MIMEBase('application', 'octet-stream')
+                part2.set_payload(design_file.getvalue())
+                encoders.encode_base64(part2)
+                part2.add_header('Content-Disposition', f'attachment; filename="AF_{design_file.name}"')
+                msg.attach(part2)
 
-# Sidebar Dashboard
-with st.sidebar:
-    st.markdown("### 📊 MÉTRICAS DE PRODUCCIÓN")
-    ml, m2 = calcular_metricas(st.session_state.modelos)
-    st.markdown(f'<div class="stat-box">Lineales: <b>{ml} m</b></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="stat-box">Superficie: <b>{m2} m²</b></div>', unsafe_allow_html=True)
-    st.markdown("---")
-    if st.button("➕ AÑADIR OTRO MODELO"):
-        st.session_state.modelos.append({"ref": f"Referencia {len(st.session_state.modelos)+1}", "anc": 100, "lar": 100, "cant": 5000, "etq_r": 1000, "material": "PP Blanco", "file": None})
-        st.rerun()
+            server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+            server.login(sender, pwd)
+            server.send_message(msg)
+            server.quit()
+        return True
+    except Exception as e:
+        st.error(f"Error técnico: {e}")
+        return False
 
-# Formulario
-with st.container():
-    col_main, col_side = st.columns([3, 1])
+# =============================================================================
+# 5. MAIN APPLICATION
+# =============================================================================
+def main():
+    inject_dark_neon_ui()
+    st.markdown('<h1 class="neon-title">FLEXYLABEL</h1>', unsafe_allow_html=True)
     
-    with col_main:
-        st.markdown("### 📝 DATOS DEL CLIENTE")
-        c1, c2 = st.columns(2)
-        cliente = c1.text_input("Empresa")
-        email_cliente = c2.text_input("Email para confirmación")
+    with st.container():
+        with st.form("neon_industrial_form"):
+            st.markdown("### 💠 DATOS DEL EXPEDIENTE")
+            col1, col2 = st.columns(2)
+            with col1:
+                cliente = st.text_input("RAZÓN SOCIAL / CLIENTE")
+                email_c = st.text_input("EMAIL DE CONFIRMACIÓN")
+            with col2:
+                referencia = st.text_input("REFERENCIA DEL DISEÑO")
+                fecha_e = st.date_input("FECHA DE ENTREGA")
 
-        st.markdown("### 📦 CONFIGURACIÓN DE MODELOS")
-        tabs = st.tabs([f"Modelo {i+1}" for i in range(len(st.session_state.modelos))])
-        
-        for i in range(len(st.session_state.modelos)):
-            with tabs[i]:
-                st.markdown('<div class="industrial-card">', unsafe_allow_html=True)
-                col1, col2 = st.columns(2)
-                st.session_state.modelos[i]['ref'] = col1.text_input("Nombre del diseño", value=st.session_state.modelos[i]['ref'], key=f"r_{i}")
-                st.session_state.modelos[i]['material'] = col2.selectbox("Material", ["PP Blanco", "Couché", "Térmico", "Verjurado"], key=f"m_{i}")
-                
-                col3, col4, col5, col6 = st.columns(4)
-                st.session_state.modelos[i]['anc'] = col3.number_input("Ancho mm", 10, 500, st.session_state.modelos[i]['anc'], key=f"a_{i}")
-                st.session_state.modelos[i]['lar'] = col4.number_input("Largo mm", 10, 500, st.session_state.modelos[i]['lar'], key=f"l_{i}")
-                st.session_state.modelos[i]['cant'] = col5.number_input("Cantidad", 100, 1000000, st.session_state.modelos[i]['cant'], key=f"c_{i}")
-                st.session_state.modelos[i]['etq_r'] = col6.number_input("Etq/Rollo", 50, 10000, st.session_state.modelos[i]['etq_r'], key=f"e_{i}")
-                
-                st.session_state.modelos[i]['file'] = st.file_uploader("Subir PDF", type=["pdf"], key=f"f_{i}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("### 📐 PARÁMETROS TÉCNICOS")
+            col3, col4, col5 = st.columns(3)
+            with col3:
+                ancho = st.number_input("ANCHO (mm)", 1, 500, 100)
+                largo = st.number_input("LARGO (mm)", 1, 500, 100)
+            with col4:
+                cantidad = st.number_input("CANTIDAD TOTAL", 100, 1000000, 5000)
+                material = st.selectbox("SOPORTE", ["PP BLANCO", "COUCHÉ", "TRANSPARENTE", "VERJURADO"])
+            with col5:
+                etq_rollo = st.number_input("ETIQUETAS POR ROLLO", 50, 10000, 1000)
+                mandril = st.selectbox("MANDRIL", ["76mm", "40mm", "25mm"])
 
-    with col_side:
-        st.markdown("### ⚙️ TALLER")
-        st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg")
-        sentido = st.select_slider("Sentido", options=[str(x) for x in range(1,9)], value="3")
-        mandril = st.selectbox("Mandril", ["76mm", "40mm", "25mm"])
-        
-        if st.button("🚀 ENVIAR PEDIDO"):
-            if not cliente or not email_cliente:
-                st.error("Faltan datos del cliente")
-            else:
-                try:
-                    pdf = FlexyEnterprisePDF()
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("### 🌀 CONFIGURACIÓN DE SALIDA")
+            col6, col7 = st.columns(2)
+            with col6:
+                st.image("https://www.etiquetas-autoadhesivas.es/wp-content/uploads/2018/10/sentido-salida-etiquetas.jpg", caption="Esquema de Sentidos")
+                sentido = st.select_slider("POSICIÓN DE BOBINADO", options=[str(i) for i in range(1, 9)], value="3")
+            with col7:
+                archivo_af = st.file_uploader("ARTE FINAL (PDF)", type=["pdf"])
+                observaciones = st.text_area("OBSERVACIONES TÉCNICAS")
+
+            m_lineales, m2_totales = get_label_specs(cantidad, ancho, largo)
+            st.info(f"Consumo: {m_lineales} ml | {m2_totales} m²")
+
+            btn_submit = st.form_submit_button("Lanzar Orden a Producción")
+
+            if btn_submit:
+                if not cliente or not archivo_af or not email_c:
+                    st.error("ERROR: REVISA CLIENTE, EMAIL Y ARCHIVO.")
+                else:
+                    datos = {
+                        "cliente": cliente, "email": email_c, "ref": referencia,
+                        "cantidad": cantidad, "material": material, "rollo": etq_rollo
+                    }
+                    pdf = FlexyDarkPDF(datos)
                     pdf.add_page()
-                    pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 10, f"CLIENTE: {cliente}", ln=True)
-                    pdf.ln(5)
+                    pdf.draw_data_block("GENERAL", {"Cliente": cliente, "Ref": referencia})
+                    pdf.draw_data_block("TÉCNICO", {"Medida": f"{ancho}x{largo}mm", "Cant": cantidad, "Por Rollo": etq_rollo})
+                    pdf.draw_data_block("BOBINADO", {"Sentido": sentido, "Mandril": mandril})
                     
-                    for i, m in enumerate(st.session_state.modelos):
-                        pdf.write_model(i, m)
+                    path = f"ORDEN_{cliente}.pdf".replace(" ", "_")
+                    pdf.output(path)
                     
-                    pdf.ln(5)
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(0, 10, "ESPECIFICACIONES INDUSTRIALES", ln=True)
-                    pdf.set_font("Arial", '', 10)
-                    pdf.cell(0, 7, f"Sentido de salida: Posición {sentido} | Mandril: {mandril}", ln=True)
-                    
-                    nombre_archivo = f"Orden_{cliente}.pdf"
-                    pdf.output(nombre_archivo)
-                    st.success("Orden enviada y confirmación despachada.")
-                    st.balloons()
-                except Exception as e:
-                    st.error(f"Error técnico: {e}")
+                    if dispatch_neon_order(path, archivo_af, datos):
+                        st.success("ORDEN ENVIADA A TALLER Y CLIENTE")
+                        st.balloons()
+                        if os.path.exists(path): os.remove(path)
+
+if __name__ == "__main__":
+    main()
