@@ -8,7 +8,7 @@ from email import encoders
 import datetime
 
 # --- CONFIGURACIÓN ---
-DESTINATARIO_FINAL = "covet@etiquetes.com"
+DESTINATARIO_FINAL = "comandesflexylabel@gmail.com"
 
 def crear_pdf_tecnico(datos):
     pdf = FPDF()
