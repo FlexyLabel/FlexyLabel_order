@@ -23,14 +23,14 @@ def inject_full_css():
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
-            /* Fondo y Textos Generales */
+            /* Estética General Dark */
             .stApp {
                 background: radial-gradient(circle at top right, #1e293b, #0f172a);
                 color: #ffffff !important;
                 font-family: 'Inter', sans-serif;
             }
 
-            /* RECUADROS DE ENTRADA: Fondo Blanco, Letras Negras (Contraste Iván) */
+            /* INPUTS: Fondo Blanco, Letras Negras (Contraste Iván) */
             input, select, textarea, div[data-baseweb="input"] input {
                 color: #000000 !important;
                 background-color: #ffffff !important;
@@ -39,7 +39,6 @@ def inject_full_css():
                 border: 2px solid #3b82f6 !important;
             }
             
-            /* Etiquetas (Labels) */
             label {
                 color: #94a3b8 !important;
                 font-weight: 700 !important;
@@ -57,7 +56,7 @@ def inject_full_css():
                 box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             }
 
-            /* Botón de Envío */
+            /* Botón de Envío Premium */
             .stButton button {
                 background: linear-gradient(90deg, #2563eb, #3b82f6) !important;
                 color: white !important;
@@ -69,14 +68,6 @@ def inject_full_css():
                 border: none !important;
                 width: 100% !important;
                 transition: 0.3s all ease;
-            }
-
-            /* Estilo especial para botones de selección de bobinado */
-            .stButton > button[kind="secondary"] {
-                background: #1e293b !important;
-                height: 3rem !important;
-                font-size: 0.9rem !important;
-                border: 1px solid #334155 !important;
             }
 
             /* Métricas de Ingeniería */
@@ -128,7 +119,7 @@ class PDF_Industrial(FPDF):
         self.ln(8)
 
 # =============================================================================
-# 3. LÓGICA DE CORREO DUAL
+# 3. LÓGICA DE CORREO DUAL (TALLER + CLIENTE)
 # =============================================================================
 def ejecutar_envio_total(pdf_path, af_file, datos):
     try:
@@ -147,8 +138,9 @@ def ejecutar_envio_total(pdf_path, af_file, datos):
         msg_c['From'] = user
         msg_c['To'] = datos['email_c']
         msg_c['Subject'] = "Confirmación de Pedido - FlexyLabel"
-        msg_c.attach(MIMEText(f"Estimado/a {datos['cliente']},\nHemos recibido su pedido correctamente.", 'plain'))
+        msg_c.attach(MIMEText(f"Estimado/a {datos['cliente']},\nHemos recibido su pedido correctamente. Gracias por confiar en nosotros.", 'plain'))
 
+        # Adjuntar PDF a ambos
         with open(pdf_path, "rb") as f:
             file_data = f.read()
             for m in [msg_t, msg_c]:
@@ -158,6 +150,7 @@ def ejecutar_envio_total(pdf_path, af_file, datos):
                 part.add_header('Content-Disposition', f'attachment; filename="Ficha_{datos["ref"]}.pdf"')
                 m.attach(part)
 
+        # Arte Final solo al Taller
         af_part = MIMEBase('application', 'octet-stream')
         af_part.set_payload(af_file.getvalue())
         encoders.encode_base64(af_part)
@@ -179,51 +172,24 @@ def ejecutar_envio_total(pdf_path, af_file, datos):
 # =============================================================================
 inject_full_css()
 
-# Gestión del estado para la selección visual
-if 'sentido_id' not in st.session_state:
-    st.session_state.sentido_id = "1"
+if 'sentido_bobinado' not in st.session_state:
+    st.session_state.sentido_bobinado = "1"
 
 st.markdown("<h1 style='text-align:center;'>FLEXYLABEL <span style='font-weight:300;'>ORDER SYSTEM</span></h1>", unsafe_allow_html=True)
 
 L, M, R = st.columns([1, 4, 1])
 
 with M:
-    # --- SECCIÓN VISUAL DE BOBINADO (FUERA DEL FORM PARA RESPUESTA INMEDIATA) ---
-    st.write("### ⚙️ 1. SELECCIÓN VISUAL DE BOBINADO")
-    st.info("Haz clic en el botón de la posición que necesitas para activarla.")
-    
-    # Grid de selección 4x2
-    row1 = st.columns(4)
-    row2 = st.columns(4)
-    all_cols = row1 + row2
-
-    # 
-    for i in range(1, 9):
-        with all_cols[i-1]:
-            # Aquí van las imágenes individuales de los 8 sentidos
-            st.image(f"https://raw.githubusercontent.com/Anfega/sentidos/main/{i}.png", 
-                     caption=f"Posición {i}", use_container_width=True)
-            if st.button(f"ACTIVAR {i}", key=f"pos_{i}"):
-                st.session_state.sentido_id = str(i)
-                st.rerun()
-
-    # Recuadro de confirmación de lo seleccionado
-    st.markdown(f"""
-        <div style="background:#1e3a8a; padding:20px; border-radius:15px; text-align:center; border:3px solid #3b82f6; margin-bottom:25px;">
-            <p style="color:#93c5fd; margin:0; font-weight:700; text-transform:uppercase;">Posición Técnica Seleccionada</p>
-            <h1 style="margin:0; color:white; font-size:4rem;">{st.session_state.sentido_id}</h1>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # --- FORMULARIO DE DATOS (ORDEN IVÁN) ---
     with st.form("industrial_form_v4"):
-        st.write("### 🏢 2. DATOS DEL PROYECTO")
+        # --- SECCIÓN 1: DATOS PROYECTO ---
+        st.write("### 🏢 1. DATOS DEL PROYECTO")
         c1, c2, c3 = st.columns([2, 2, 1])
         cliente = c1.text_input("RAZÓN SOCIAL / CLIENTE")
         email_c = c2.text_input("EMAIL DE CONFIRMACIÓN")
         ref_p = c3.text_input("REF. INTERNA", value="ORD-2026")
 
-        st.write("### 📐 3. ESPECIFICACIONES TÉCNICAS")
+        # --- SECCIÓN 2: ESPECIFICACIONES ---
+        st.write("### 📐 2. ESPECIFICACIONES TÉCNICAS")
         c4, c5, c6 = st.columns(3)
         ancho = c4.number_input("ANCHO (mm)", value=100)
         largo = c5.number_input("LARGO (mm)", value=100)
@@ -234,14 +200,35 @@ with M:
         mandril = c8.selectbox("MANDRIL", ["76mm", "40mm", "25mm"])
         etq_r = c9.number_input("ETIQUETAS / ROLLO", value=1000)
 
+        # --- SECCIÓN 3: BOBINADO (ORDEN IVÁN - COMPACTO) ---
+        st.write("---")
+        st.write("### ⚙️ 3. SENTIDO DE BOBINADO")
+        
+        # Grid compacto de 8 posiciones
+        
+        b_cols = st.columns(8)
+        for i in range(1, 9):
+            with b_cols[i-1]:
+                st.image(f"https://raw.githubusercontent.com/Anfega/sentidos/main/{i}.png", use_container_width=True)
+                if st.checkbox(f"P{i}", key=f"check_{i}"):
+                    st.session_state.sentido_bobinado = str(i)
+
+        st.markdown(f"""
+            <div style="background:#1e3a8a; padding:10px; border-radius:10px; text-align:center; border:1px solid #3b82f6;">
+                <span style="color:#93c5fd; font-weight:700;">SENTIDO SELECCIONADO:</span> 
+                <span style="color:white; font-size:1.4rem; font-weight:800; margin-left:10px;">{st.session_state.sentido_bobinado}</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # --- SECCIÓN 4: ARCHIVOS ---
         st.write("### 📂 4. ARCHIVOS Y ACABADOS")
         c10, c11 = st.columns([1, 1])
         with c10:
             archivo_af = st.file_uploader("SUBIR DISEÑO (PDF)", type=["pdf"])
         with c11:
-            obs = st.text_area("NOTAS PARA EL MAQUINISTA")
+            obs = st.text_area("NOTAS PARA EL MAQUINISTA", height=100)
 
-        # Cálculos de ingeniería automáticos
+        # --- MÉTRICAS DE INGENIERÍA ---
         ml = (cantidad * (largo + 3)) / 1000
         m2 = (ancho * largo * cantidad) / 1000000
         st.markdown(f"""
@@ -251,19 +238,24 @@ with M:
             </div>
         """, unsafe_allow_html=True)
 
+        # --- BOTÓN DE ENVÍO Y GENERACIÓN ---
         if st.form_submit_button("🚀 ENVIAR ORDEN DE TRABAJO"):
             if not cliente or not archivo_af or not email_c:
-                st.error("Campos críticos faltantes.")
+                st.error("Faltan campos críticos (Cliente, Email o Arte Final).")
             else:
+                # 1. Generar PDF Profesional
                 pdf = PDF_Industrial()
                 pdf.add_page()
+                
                 pdf.seccion("DATOS DEL PEDIDO")
                 pdf.fila("Cliente", cliente, "Referencia", ref_p)
+                
                 pdf.seccion("FICHA TÉCNICA")
                 pdf.fila("Medidas", f"{ancho} x {largo} mm", "Cantidad", f"{cantidad} uds")
                 pdf.fila("Material", material, "Etiq/Rollo", etq_r)
+                
                 pdf.seccion("TALLER")
-                pdf.fila("Sentido Salida", st.session_state.sentido_id, "Mandril", mandril)
+                pdf.fila("Sentido Salida", st.session_state.sentido_bobinado, "Mandril", mandril)
                 pdf.fila("Metros Lineales", f"{round(ml, 2)} m", "M2 Totales", f"{round(m2, 2)} m2")
                 
                 if obs:
@@ -274,9 +266,10 @@ with M:
                 path_pdf = f"Ficha_{ref_p}.pdf"
                 pdf.output(path_pdf)
 
-                with st.spinner("Sincronizando con taller..."):
+                # 2. Ejecutar Envio Dual
+                with st.spinner("Sincronizando con taller y cliente..."):
                     if ejecutar_envio_total(path_pdf, archivo_af, {"cliente": cliente, "email_c": email_c, "ref": ref_p}):
-                        st.success("✅ ORDEN REGISTRADA Y ENVIADA.")
+                        st.success("✅ ORDEN REGISTRADA. MAQUINISTA Y CLIENTE NOTIFICADOS.")
                         st.balloons()
                         if os.path.exists(path_pdf): os.remove(path_pdf)
 
